@@ -186,12 +186,7 @@ void Object::Update(const orxCLOCK_INFO &_rstInfo)
 orxBOOL Object::OnCollide(ScrollObject *_poCollider, orxBODY_PART *_pstPart, orxBODY_PART *_pstColliderPart, const orxVECTOR &_rvPosition, const orxVECTOR &_rvNormal)
 {
     orxASSERT(_poCollider);
-    auto partName = orxBody_GetPartName(_pstPart);
-    auto colliderName = orxBody_GetPartName(_pstColliderPart);
-    auto isSensor = orxString_Compare(partName, "BoidSensorPart") == 0;
-    auto isBody = orxString_Compare(colliderName, "BoidBodyPart") == 0;
-    if (isSensor && isBody)
-        flock.Add(_poCollider->GetOrxObject());
+    flock.Add(_poCollider->GetOrxObject());
     return orxTRUE;
 }
 
