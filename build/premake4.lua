@@ -162,7 +162,8 @@ solution "boids-orx"
             "-stdlib=libc++",
             "-gdwarf-2",
             "-Wno-unused-function",
-            "-Wno-write-strings"
+            "-Wno-write-strings",
+            "-std=c++20"
         }
         linkoptions
         {
