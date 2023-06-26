@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <set>
 #include "boids-orx.h"
 
@@ -12,7 +13,7 @@ namespace boid
     public:
         std::set<neighbor> neighbors{};
 
-        void Add(neighbor add);
+        void Add(orxVECTOR &reference, neighbor add);
         void Remove(neighbor remove);
 
         orxVECTOR Center();
@@ -21,9 +22,11 @@ namespace boid
         orxVECTOR ToFlockCenter(orxVECTOR &position);
         orxVECTOR ToFlockVelocity(orxVECTOR &position);
 
-    private:
         const size_t max_neighbors = 16;
-        const orxFLOAT max_avoidance_distance = 45.0f;
+        const orxFLOAT max_avoidance_distance = 100.0f;
+
+    private:
+        std::optional<neighbor> FindFarther(orxVECTOR &reference, neighbor check);
     };
 }
 
