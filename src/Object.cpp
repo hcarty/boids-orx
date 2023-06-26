@@ -18,11 +18,38 @@ orxFLOAT orxVector_ToRotation(orxVECTOR *v)
     return atan2(v->fY, v->fX);
 }
 
-void boid::Flock::Add(neighbor add)
+std::optional<boid::neighbor> boid::Flock::FindFarther(orxVECTOR &reference, neighbor check)
+{
+    orxVECTOR checkPosition = orxVECTOR_0;
+    orxObject_GetWorldPosition(check, &checkPosition);
+    auto checkDistance = orxVector_GetDistance(&checkPosition, &reference);
+
+    orxVECTOR neighborPosition = orxVECTOR_0;
+    for (auto neighbor : neighbors)
+    {
+        orxObject_GetWorldPosition(neighbor, &neighborPosition);
+        auto neighborDistance = orxVector_GetDistance(&neighborPosition, &reference);
+        if (neighborDistance > checkDistance)
+            return neighbor;
+    }
+
+    return std::nullopt;
+}
+
+void boid::Flock::Add(orxVECTOR &reference, neighbor add)
 {
     if (neighbors.size() < max_neighbors)
     {
         neighbors.insert(add);
+    }
+    else
+    {
+        auto kicked = FindFarther(reference, add);
+        if (kicked.has_value())
+        {
+            Remove(kicked.value());
+            neighbors.insert(add);
+        }
     }
 }
 
@@ -47,7 +74,7 @@ orxVECTOR boid::Flock::Center()
 orxVECTOR boid::Flock::Velocity()
 {
     orxVECTOR velocity = orxVECTOR_0;
-    for (auto *o : neighbors)
+    for (auto o : neighbors)
     {
         orxVECTOR vel = orxVECTOR_0;
         orxObject_GetSpeed(o, &vel);
@@ -146,15 +173,28 @@ void Object::BoidUpdate(orxFLOAT dt)
     if (flock.neighbors.size() > 0)
     {
         auto avoidanceDelta = flock.ToAvoidanceTarget(position);
-        orxVector_Mulf(&avoidanceDelta, &avoidanceDelta, 60);
+        orxVector_Mulf(&avoidanceDelta, &avoidanceDelta, 10);
         auto centerDelta = flock.ToFlockCenter(position);
-        orxVector_Mulf(&centerDelta, &centerDelta, 5);
+        orxVector_Mulf(&centerDelta, &centerDelta, 1);
         auto velocityDelta = flock.ToFlockVelocity(speed);
         orxVector_Mulf(&velocityDelta, &velocityDelta, 1);
 
         orxVector_Add(&speedDelta, &speedDelta, &avoidanceDelta);
         orxVector_Add(&speedDelta, &speedDelta, &centerDelta);
         orxVector_Add(&speedDelta, &speedDelta, &velocityDelta);
+    }
+
+    if (flock.neighbors.size() == flock.max_neighbors)
+    {
+        orxVECTOR rgb = {255, 0, 0};
+        orxCOLOR color = {rgb, 1.0};
+        SetColor(color);
+    }
+    else
+    {
+        orxVECTOR rgb = {255, 255, 255};
+        orxCOLOR color = {rgb, 1.0};
+        SetColor(color);
     }
 
     orxVector_Mulf(&speedDelta, &speedDelta, dt);
@@ -165,6 +205,7 @@ void Object::BoidUpdate(orxFLOAT dt)
     orxVector_Normalize(&fullSpeed, &fullSpeed);
     orxVector_Mulf(&fullSpeed, &fullSpeed, targetSpeed);
     orxVector_Lerp(&speed, &speed, &fullSpeed, 0.1);
+
     SetSpeed(speed);
     SetRotation(orxVector_ToRotation(&speed) + M_PI);
 }
@@ -190,8 +231,10 @@ orxBOOL Object::OnCollide(ScrollObject *_poCollider, orxBODY_PART *_pstPart, orx
     auto colliderName = orxBody_GetPartName(_pstColliderPart);
     auto isSensor = orxString_Compare(partName, "BoidSensorPart") == 0;
     auto isBody = orxString_Compare(colliderName, "BoidBodyPart") == 0;
+    orxVECTOR pos = orxVECTOR_0;
+    GetPosition(pos, orxTRUE);
     if (isSensor && isBody)
-        flock.Add(_poCollider->GetOrxObject());
+        flock.Add(pos, _poCollider->GetOrxObject());
     return orxTRUE;
 }
 
