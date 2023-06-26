@@ -224,7 +224,7 @@ void Object::Update(const orxCLOCK_INFO &_rstInfo)
     BoidUpdate(_rstInfo.fDT);
 }
 
-orxBOOL Object::OnCollide(ScrollObject *_poCollider, orxBODY_PART *_pstPart, orxBODY_PART *_pstColliderPart, const orxVECTOR &_rvPosition, const orxVECTOR &_rvNormal)
+void Object::OnCollide(ScrollObject *_poCollider, orxBODY_PART *_pstPart, orxBODY_PART *_pstColliderPart, const orxVECTOR &_rvPosition, const orxVECTOR &_rvNormal)
 {
     orxASSERT(_poCollider);
     auto partName = orxBody_GetPartName(_pstPart);
@@ -235,12 +235,10 @@ orxBOOL Object::OnCollide(ScrollObject *_poCollider, orxBODY_PART *_pstPart, orx
     GetPosition(pos, orxTRUE);
     if (isSensor && isBody)
         flock.Add(pos, _poCollider->GetOrxObject());
-    return orxTRUE;
 }
 
-orxBOOL Object::OnSeparate(ScrollObject *_poCollider)
+void Object::OnSeparate(ScrollObject *_poCollider, orxBODY_PART *_pstPart, orxBODY_PART *_pstColliderPart)
 {
     orxASSERT(_poCollider);
     flock.Remove(_poCollider->GetOrxObject());
-    return orxTRUE;
 }
